@@ -27,6 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+APPEND_SLASH = True
 
 # Application definition
 
@@ -135,6 +136,9 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
         # Note: no SessionAuthentication for submission of the project
         'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',       
     ],
     'DEFAULT_THROTTLE_RATES': {
         'anon': '2/minute',
