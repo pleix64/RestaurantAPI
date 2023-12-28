@@ -1,14 +1,16 @@
 from typing import Any
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, DjangoModelPermissionsOrAnonReadOnly
 from django.contrib.auth.models import User, Group
-from .models import Category, MenuItem
-from .serializers import (CategorySerializer, MenuItemSerializer,
-                          UserSerializer, )
+from .models import Category, MenuItem, Cart
+from .serializers import (CategorySerializer, 
+                          MenuItemSerializer,
+                          UserSerializer, 
+                          CartCustomerSerializer,)
 
 class CategoryListView(generics.ListCreateAPIView):
     queryset = Category.objects.all()
@@ -71,3 +73,32 @@ def user_group_remove(request, groupname, userID):
     serialized = UserSerializer(user, many=False)
     return Response(serialized.data, status=status.HTTP_200_OK)
         
+        
+class CartCustomerView(generics.ListCreateAPIView, generics.DestroyAPIView):
+    serializer_class = CartCustomerSerializer
+    
+    def get_queryset(self):
+        userID = self.request.user.id
+        return Cart.objects.filter(user=userID)
+    
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+        # menuitem_pk = int(data.__getitem__('menuitem'))
+        # unit_price = MenuItem.objects.values_list('price', flat=True).get(pk=menuitem_pk)
+        # quantity = int(data.__getitem__('quantity'))
+        # price = unit_price * quantity
+        data.__setitem__('user', request.user.id)
+        # data.__setitem__('unit_price', unit_price)
+        # data.__setitem__('price', price)  
+        
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        print('Successful until validation.')
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data) 
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    
+    def destroy(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        self.perform_destroy(queryset)
+        return Response(status=status.HTTP_204_NO_CONTENT)
