@@ -1,16 +1,22 @@
 from typing import Any
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.urls import reverse
+import requests
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, DjangoModelPermissionsOrAnonReadOnly
+from rest_framework.permissions import (IsAuthenticated, 
+                                        DjangoModelPermissions,
+                                        DjangoModelPermissionsOrAnonReadOnly, )
 from django.contrib.auth.models import User, Group
-from .models import Category, MenuItem, Cart
+from .models import Category, MenuItem, Cart, Order, OrderItem
 from .serializers import (CategorySerializer, 
                           MenuItemSerializer,
                           UserSerializer, 
-                          CartCustomerSerializer,)
+                          CartCustomerSerializer,
+                          OrderSerializer, 
+                          OrderItemSerializer)
 
 class CategoryListView(generics.ListCreateAPIView):
     queryset = Category.objects.all()
@@ -83,17 +89,9 @@ class CartCustomerView(generics.ListCreateAPIView, generics.DestroyAPIView):
     
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
-        # menuitem_pk = int(data.__getitem__('menuitem'))
-        # unit_price = MenuItem.objects.values_list('price', flat=True).get(pk=menuitem_pk)
-        # quantity = int(data.__getitem__('quantity'))
-        # price = unit_price * quantity
-        data.__setitem__('user', request.user.id)
-        # data.__setitem__('unit_price', unit_price)
-        # data.__setitem__('price', price)  
-        
+        data.__setitem__('user', request.user.id)        
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        print('Successful until validation.')
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data) 
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
@@ -102,3 +100,80 @@ class CartCustomerView(generics.ListCreateAPIView, generics.DestroyAPIView):
         queryset = self.get_queryset()
         self.perform_destroy(queryset)
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
+class OrderListView(generics.ListCreateAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        if self.request.user.groups.filter(name='Manager').exists():
+            return Order.objects.all()
+        elif self.request.user.groups.filter(name='Delivery Crew').exists():
+            return Order.objects.filter(delivery_crew__exact=self.request.user.id)
+        else:
+            return Order.objects.filter(user__exact=self.request.user.id)
+        
+    def create(self, request, *args, **kwargs):
+        # create new order 
+        order_serializer = self.get_serializer(data=request.data)
+        order_serializer.is_valid(raise_exception=True)
+        self.perform_create(order_serializer)
+        
+        # import data from cart items
+        domain = 'http://127.0.0.1:8000'
+        cart_path = reverse("api:cart")
+        cart_data = None
+        if request.auth:
+            headers = {'Authorization': f'Token {request.auth}'}
+            response = requests.get(domain + cart_path, headers=headers)
+            cart_data = response.json()
+        else:
+            return Response({"message": "Not authenticated to retrieve cart items."}, 
+                            status=status.HTTP_401_UNAUTHORIZED)
+            
+        # create order items data
+        order_items = []
+        for row in cart_data:
+            item = row.copy()
+            item.pop("id")
+            item.pop("user")
+            item["order"] = order_serializer.data["id"]
+            order_items.append(item)
+            
+        order_item_serializer = OrderItemSerializer(data=order_items, many=True)
+        order_item_serializer.is_valid(raise_exception=True)
+        self.perform_create(order_item_serializer)
+        
+        # no need of return for OrderItem headers, just run in case of error raising
+        self.get_success_headers(order_item_serializer.data) 
+        headers = self.get_success_headers(order_serializer.data)
+        
+        if request.auth:
+            headers = {'Authorization': f'Token {request.auth}'}
+            requests.delete(domain + cart_path, headers=headers)
+        else:
+            return Response({"message": "Not authenticated to delete cart items."}, 
+                            status=status.HTTP_401_UNAUTHORIZED)
+        
+        # Currently, order_serializer is not updated with dishes (order items) after they are
+        # added into OrderItem model in database. The response will only show order data 
+        # with empty dishes list. Good enough for now. 
+        # But if want to fix it, maybe need to learn more about 
+        # Writable Nested Representations 
+        # https://www.django-rest-framework.org/api-guide/serializers/#writable-nested-representations
+        return Response(order_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+        
+class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [DjangoModelPermissions]
+    
+    def get_queryset(self):
+        if self.request.user.groups.filter(name='Manager').exists():
+            return Order.objects.all()
+        elif self.request.user.groups.filter(name='Delivery Crew').exists():
+            return Order.objects.filter(delivery_crew__exact=self.request.user.id)
+        else:
+            return Order.objects.filter(user__exact=self.request.user.id)
+    

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User, Group
-from .models import Category, MenuItem, Cart 
+from .models import Category, MenuItem, Cart, Order, OrderItem
         
 class CategorySerializer(serializers.ModelSerializer):
     
@@ -43,3 +43,39 @@ class CartCustomerSerializer(serializers.ModelSerializer):
     
     def get_price(self, obj):
         return obj.quantity * self.get_unit_price(obj)
+    
+    
+class OrderItemSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = OrderItem
+        fields = ['id', 'order', 'menuitem', 'quantity', 'unit_price', 'price']
+    
+
+class OrderTotalField(serializers.Field):
+    
+    def to_internal_value(self, data):
+        return super().to_internal_value(data)
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    delivery_crew = serializers.PrimaryKeyRelatedField(queryset=User.objects.filter(groups__name="Delivery Crew"), 
+                                                       allow_null=True, 
+                                                       default=None)
+    dishes = OrderItemSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Order
+        fields = ['id', 'user', 'delivery_crew', 'status', 'total', 'date', 'dishes']
+        
+    def get_request_user(self):
+        user = None
+        request = self.context.get("request")
+        if request and hasattr(request, "user"):
+            user = request.user
+        return user
+    
+
+
+        

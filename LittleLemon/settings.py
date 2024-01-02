@@ -139,9 +139,9 @@ REST_FRAMEWORK = {
         # Note: no SessionAuthentication for submission of the project
         'rest_framework.authentication.SessionAuthentication',
     ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticatedOrReadOnly',       
-    ],
+    # 'DEFAULT_PERMISSION_CLASSES': [
+    #     'rest_framework.permissions.IsAuthenticatedOrReadOnly',       
+    # ],
     'DEFAULT_THROTTLE_RATES': {
         'anon': '2/minute',
         'user': '5/minute',

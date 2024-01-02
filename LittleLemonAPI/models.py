@@ -23,8 +23,6 @@ class Cart(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     menuitem = models.ForeignKey(MenuItem, on_delete=models.CASCADE)
     quantity = models.SmallIntegerField()
-    # unit_price = models.DecimalField(max_digits=6, decimal_places=2)
-    # price = models.DecimalField(max_digits=6, decimal_places=2)
     
     class Meta:
         unique_together = ('menuitem', 'user')
@@ -38,14 +36,27 @@ class Cart(models.Model):
         
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    delivery_crew = models.ForeignKey(User, on_delete=models.SET_NULL, related_name="delivery_crew", null=True)
+    delivery_crew = models.ForeignKey(User,
+                                      related_name="delivery_crew", 
+                                      blank=True,
+                                      null=True, 
+                                      on_delete=models.SET_NULL)
     status = models.BooleanField(db_index=True, default=0)
-    total = models.DecimalField(max_digits=6, decimal_places=2)
-    date = models.DateField(db_index=True)
+    # total = models.DecimalField(max_digits=6, 
+    #                             decimal_places=2,
+    #                             default=0)
+                                # null=True,
+                                # blank=True)
+    date = models.DateField(db_index=True, auto_now_add=True)
     
+    @property
+    def total(self):
+        from django.db.models import Sum
+        return self.dishes.aggregate(Sum("price"))['price__sum']
+        
 
 class OrderItem(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    order = models.ForeignKey(Order, related_name='dishes', on_delete=models.CASCADE)
     menuitem = models.ForeignKey(MenuItem, on_delete=models.CASCADE)
     quantity = models.SmallIntegerField()
     unit_price = models.DecimalField(max_digits=6, decimal_places=2)
@@ -53,3 +64,4 @@ class OrderItem(models.Model):
     
     class Meta:
         unique_together = ('order', 'menuitem')
+        
