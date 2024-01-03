@@ -16,6 +16,7 @@ from .serializers import (CategorySerializer,
                           UserSerializer, 
                           CartCustomerSerializer,
                           OrderSerializer, 
+                          OrderUpdateSerializer,
                           OrderItemSerializer)
 
 class CategoryListView(generics.ListCreateAPIView):
@@ -166,7 +167,6 @@ class OrderListView(generics.ListCreateAPIView):
 
         
 class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = OrderSerializer
     permission_classes = [DjangoModelPermissions]
     
     def get_queryset(self):
@@ -177,3 +177,8 @@ class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
         else:
             return Order.objects.filter(user__exact=self.request.user.id)
     
+    def get_serializer_class(self):
+        if self.request.user.groups.filter(name='Manager').exists():
+            return OrderSerializer
+        else:
+            return OrderUpdateSerializer

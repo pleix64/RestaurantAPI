@@ -76,6 +76,11 @@ class OrderSerializer(serializers.ModelSerializer):
             user = request.user
         return user
     
+class OrderUpdateSerializer(serializers.ModelSerializer):
+    dishes = OrderItemSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Order
+        fields = ['id','user', 'delivery_crew', 'status', 'total', 'date', 'dishes']
+        read_only_fields = ['id','user', 'delivery_crew', 'total', 'date', 'dishes']
 
-
-        
