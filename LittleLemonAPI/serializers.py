@@ -31,7 +31,6 @@ class UserSerializer(serializers.ModelSerializer):
         
 
 class CartCustomerSerializer(serializers.ModelSerializer):    
-    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     unit_price = serializers.SerializerMethodField()
     price = serializers.SerializerMethodField()
     
@@ -100,6 +99,7 @@ class OrderDeliveryCrewSerializer(serializers.ModelSerializer):
     delivery_crew = serializers.StringRelatedField()
     dishes = OrderItemSerializer(many=True, read_only=True)
     
+
     class Meta:
         model = Order
         fields = ['id','user', 'delivery_crew', 'status', 'total', 'date', 'dishes']
