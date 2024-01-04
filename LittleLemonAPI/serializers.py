@@ -30,7 +30,8 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ["id", "username", "first_name", "last_name", "email", "groups"]
         
 
-class CartCustomerSerializer(serializers.ModelSerializer):    
+class CartCustomerSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     unit_price = serializers.SerializerMethodField()
     price = serializers.SerializerMethodField()
     

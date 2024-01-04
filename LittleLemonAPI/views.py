@@ -90,15 +90,6 @@ class CartCustomerView(generics.ListCreateAPIView, generics.DestroyAPIView):
         userID = self.request.user.id
         return Cart.objects.filter(user=userID)
     
-    def create(self, request, *args, **kwargs):
-        data = request.data.copy()
-        data.__setitem__('user', request.user.id)        
-        serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data) 
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-    
     def destroy(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         self.perform_destroy(queryset)
@@ -147,7 +138,8 @@ class OrderListView(generics.ListCreateAPIView):
         for row in cart_data:
             item = row.copy()
             item.pop("id")
-            item.pop("user")
+            if "user" in item.keys():
+                item.pop("user")
             item["order"] = order_serializer.data["id"]
             order_items.append(item)
             
