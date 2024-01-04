@@ -92,7 +92,7 @@ class CartCustomerView(generics.ListCreateAPIView, generics.DestroyAPIView):
     
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
-        # data.__setitem__('user', request.user.id)        
+        data.__setitem__('user', request.user.id)        
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
