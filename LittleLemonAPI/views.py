@@ -15,9 +15,11 @@ from .serializers import (CategorySerializer,
                           MenuItemSerializer,
                           UserSerializer, 
                           CartCustomerSerializer,
+                          OrderItemSerializer,
                           OrderSerializer, 
-                          OrderUpdateSerializer,
-                          OrderItemSerializer)
+                          OrderCreateSerializer,
+                          OrderManagerSerializer,
+                          OrderDeliveryCrewSerializer)
 
 class CategoryListView(generics.ListCreateAPIView):
     queryset = Category.objects.all()
@@ -90,7 +92,7 @@ class CartCustomerView(generics.ListCreateAPIView, generics.DestroyAPIView):
     
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
-        data.__setitem__('user', request.user.id)        
+        # data.__setitem__('user', request.user.id)        
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -104,7 +106,6 @@ class CartCustomerView(generics.ListCreateAPIView, generics.DestroyAPIView):
     
 
 class OrderListView(generics.ListCreateAPIView):
-    serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
@@ -114,6 +115,14 @@ class OrderListView(generics.ListCreateAPIView):
             return Order.objects.filter(delivery_crew__exact=self.request.user.id)
         else:
             return Order.objects.filter(user__exact=self.request.user.id)
+        
+    def get_serializer_class(self):
+        if (not (self.request.user.groups.filter(name='Manager').exists() or 
+                self.request.user.groups.filter(name="Delivery Crew").exists()) 
+            and self.request.method=='POST'):
+            return OrderCreateSerializer
+        else:
+            return OrderSerializer
         
     def create(self, request, *args, **kwargs):
         # create new order 
@@ -150,6 +159,7 @@ class OrderListView(generics.ListCreateAPIView):
         self.get_success_headers(order_item_serializer.data) 
         headers = self.get_success_headers(order_serializer.data)
         
+        # clear cart
         if request.auth:
             headers = {'Authorization': f'Token {request.auth}'}
             requests.delete(domain + cart_path, headers=headers)
@@ -157,13 +167,10 @@ class OrderListView(generics.ListCreateAPIView):
             return Response({"message": "Not authenticated to delete cart items."}, 
                             status=status.HTTP_401_UNAUTHORIZED)
         
-        # Currently, order_serializer is not updated with dishes (order items) after they are
-        # added into OrderItem model in database. The response will only show order data 
-        # with empty dishes list. Good enough for now. 
-        # But if want to fix it, maybe need to learn more about 
-        # Writable Nested Representations 
-        # https://www.django-rest-framework.org/api-guide/serializers/#writable-nested-representations
-        return Response(order_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        # return serialized Order with nested OrderItems
+        result_obj = get_object_or_404(self.get_queryset(), pk=order_serializer.data["id"])
+        result_serializer = OrderSerializer(result_obj)
+        return Response(result_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
         
 class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -179,6 +186,8 @@ class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
     
     def get_serializer_class(self):
         if self.request.user.groups.filter(name='Manager').exists():
-            return OrderSerializer
+            return OrderManagerSerializer
+        elif self.request.user.groups.filter(name="Delivery Crew").exists():
+            return OrderDeliveryCrewSerializer
         else:
-            return OrderUpdateSerializer
+            return OrderSerializer
