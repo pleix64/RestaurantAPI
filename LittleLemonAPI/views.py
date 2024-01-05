@@ -14,7 +14,7 @@ from .models import Category, MenuItem, Cart, Order, OrderItem
 from .serializers import (CategorySerializer, 
                           MenuItemSerializer,
                           UserSerializer, 
-                          CartCustomerSerializer,
+                          CartSerializer,
                           OrderItemSerializer,
                           OrderSerializer, 
                           OrderCreateSerializer,
@@ -83,8 +83,8 @@ def user_group_remove(request, groupname, userID):
     return Response(serialized.data, status=status.HTTP_200_OK)
         
         
-class CartCustomerView(generics.ListCreateAPIView, generics.DestroyAPIView):
-    serializer_class = CartCustomerSerializer
+class CartListView(generics.ListCreateAPIView, generics.DestroyAPIView):
+    serializer_class = CartSerializer
     
     def get_queryset(self):
         userID = self.request.user.id

@@ -5,7 +5,7 @@ from .views import (CategoryListView,
                     MenuItemDetailView,
                     user_group, 
                     user_group_remove, 
-                    CartCustomerView,
+                    CartListView,
                     OrderListView,
                     OrderDetailView)
 
@@ -17,7 +17,7 @@ urlpatterns = [
     path('menu-items/<int:pk>', MenuItemDetailView.as_view()),
     path('groups/<str:groupname>/users', user_group),
     path('groups/<str:groupname>/users/<int:userID>', user_group_remove),
-    path('cart/menu-items', CartCustomerView.as_view(), name='cart'), 
+    path('cart/menu-items', CartListView.as_view(), name='cart'), 
     path('orders', OrderListView.as_view()),
     path('orders/<int:pk>', OrderDetailView.as_view()),
 ]

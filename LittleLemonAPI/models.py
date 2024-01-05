@@ -22,7 +22,7 @@ class MenuItem(models.Model):
 class Cart(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     menuitem = models.ForeignKey(MenuItem, on_delete=models.CASCADE)
-    quantity = models.SmallIntegerField()
+    quantity = models.PositiveSmallIntegerField(default=1)
     
     class Meta:
         unique_together = ('menuitem', 'user')
@@ -30,8 +30,8 @@ class Cart(models.Model):
     def get_unit_price(self):
         return self.menuitem.price
     
-    def get_price(self):
-        return self.quantity * self.unit_price
+    # def get_price(self):
+    #     return self.quantity * self.unit_price # does this field still exist? FIXME!
         
         
 class Order(models.Model):
@@ -58,7 +58,7 @@ class Order(models.Model):
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name='dishes', on_delete=models.CASCADE)
     menuitem = models.ForeignKey(MenuItem, on_delete=models.CASCADE)
-    quantity = models.SmallIntegerField()
+    quantity = models.PositiveSmallIntegerField(default=1)
     unit_price = models.DecimalField(max_digits=6, decimal_places=2)
     price = models.DecimalField(max_digits=6, decimal_places=2)
     
