@@ -1,6 +1,5 @@
 from typing import Any
-from django.shortcuts import render, get_object_or_404
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 import requests
 from rest_framework import generics, status
@@ -50,6 +49,9 @@ def user_group(request, groupname):
 
     groupname = groupname.replace('-', ' ').title()
     if request.method=='GET':
+        if not Group.objects.filter(name=groupname).exists():
+            return Response({"message": "User group not found. Please enter 'manager' or 'delivery-crew' in url path between '/groups/' and '/users'."},
+                            status=status.HTTP_404_NOT_FOUND)
         queryset = User.objects.filter(groups__name=groupname)
         serialized = UserSerializer(queryset, many=True)
         return Response(serialized.data)
@@ -85,6 +87,7 @@ def user_group_remove(request, groupname, userID):
         
 class CartListView(generics.ListCreateAPIView, generics.DestroyAPIView):
     serializer_class = CartSerializer
+    permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
         userID = self.request.user.id
