@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'djoser',
+    'django_filters',
     'debug_toolbar',
 ]
 
@@ -139,9 +140,11 @@ REST_FRAMEWORK = {
         # Note: no SessionAuthentication for submission of the project
         'rest_framework.authentication.SessionAuthentication',
     ],
-    # 'DEFAULT_PERMISSION_CLASSES': [
-    #     'rest_framework.permissions.IsAuthenticatedOrReadOnly',       
-    # ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',       
+    ],
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend',
+                                'rest_framework.filters.SearchFilter'],
     'DEFAULT_THROTTLE_RATES': {
         'anon': '2/minute',
         'user': '5/minute',

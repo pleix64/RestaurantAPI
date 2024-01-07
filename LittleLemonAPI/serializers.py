@@ -64,7 +64,6 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ['id', 'user', 'delivery_crew', 'status', 'total', 'date', 'dishes']
         read_only_fields = ['id', 'user', 'delivery_crew', 'status', 'total', 'date', 'dishes']
-        # may need to set all to read_only to avoid logic leak from serializer class setup in View
         
     
 class OrderCreateSerializer(serializers.ModelSerializer):

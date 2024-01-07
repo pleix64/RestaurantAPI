@@ -19,6 +19,7 @@ from .serializers import (CategorySerializer,
                           OrderCreateSerializer,
                           OrderManagerSerializer,
                           OrderDeliveryCrewSerializer)
+from .filters import MenuItemFilter, OrderFilter
 
 class CategoryListView(generics.ListCreateAPIView):
     queryset = Category.objects.all()
@@ -34,6 +35,8 @@ class MenuItemListView(generics.ListCreateAPIView):
     queryset = MenuItem.objects.all()
     serializer_class = MenuItemSerializer
     permission_classes = [DjangoModelPermissionsOrAnonReadOnly]
+    filterset_class = MenuItemFilter
+    search_fields = ['title']
     
 class MenuItemDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = MenuItem.objects.all()
@@ -101,6 +104,8 @@ class CartListView(generics.ListCreateAPIView, generics.DestroyAPIView):
 
 class OrderListView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
+    filterset_class = OrderFilter
+    search_fields = ['user__username', 'delivery_crew__username']
     
     def get_queryset(self):
         if self.request.user.groups.filter(name='Manager').exists():

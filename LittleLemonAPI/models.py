@@ -29,9 +29,6 @@ class Cart(models.Model):
         
     def get_unit_price(self):
         return self.menuitem.price
-    
-    # def get_price(self):
-    #     return self.quantity * self.unit_price # does this field still exist? FIXME!
         
         
 class Order(models.Model):
