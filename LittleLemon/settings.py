@@ -144,11 +144,17 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',       
     ],
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend',
-                                'rest_framework.filters.SearchFilter'],
+                                'rest_framework.filters.SearchFilter',
+                                'rest_framework.filters.OrderingFilter'],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 5,
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '2/minute',
-        'user': '5/minute',
-        'ten': '10/minute'
+        'anon': '10/minute',
+        'user': '20/minute'
     }
 }
 

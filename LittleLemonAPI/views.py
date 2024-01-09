@@ -2,7 +2,7 @@ from typing import Any
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 import requests
-from rest_framework import generics, status
+from rest_framework import generics, status, filters
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import (IsAuthenticated, 
@@ -37,6 +37,7 @@ class MenuItemListView(generics.ListCreateAPIView):
     permission_classes = [DjangoModelPermissionsOrAnonReadOnly]
     filterset_class = MenuItemFilter
     search_fields = ['title']
+    ordering_fields = ['title', 'price']
     
 class MenuItemDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = MenuItem.objects.all()
@@ -106,6 +107,8 @@ class OrderListView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     filterset_class = OrderFilter
     search_fields = ['user__username', 'delivery_crew__username']
+    ordering_fields = ['status', 'date']
+    ordering = ['status', 'date']
     
     def get_queryset(self):
         if self.request.user.groups.filter(name='Manager').exists():
