@@ -92,6 +92,7 @@ def user_group_remove(request, groupname, userID):
 class CartListView(generics.ListCreateAPIView, generics.DestroyAPIView):
     serializer_class = CartSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = None
     
     def get_queryset(self):
         userID = self.request.user.id
@@ -108,7 +109,6 @@ class OrderListView(generics.ListCreateAPIView):
     filterset_class = OrderFilter
     search_fields = ['user__username', 'delivery_crew__username']
     ordering_fields = ['status', 'date']
-    ordering = ['status', 'date']
     
     def get_queryset(self):
         if self.request.user.groups.filter(name='Manager').exists():
@@ -127,24 +127,30 @@ class OrderListView(generics.ListCreateAPIView):
             return OrderSerializer
         
     def create(self, request, *args, **kwargs):
+        # check authentication and retrieve cart data
+        domain = 'http://127.0.0.1:8000'
+        cart_path = reverse("api:cart")
+        headers = None
+        if request.auth:
+            headers = {'Authorization': f'Token {request.auth}'}
+        elif request.user.auth_token:
+            headers = {'Authorization': f'Token {request.user.auth_token.key}'}
+        else:
+            return Response({"message": "Not authenticated to retrieve cart items."}, 
+                            status=status.HTTP_401_UNAUTHORIZED)
+        response = requests.get(domain + cart_path, headers=headers)
+        cart_data = response.json()
+        
         # create new order 
         order_serializer = self.get_serializer(data=request.data)
         order_serializer.is_valid(raise_exception=True)
         self.perform_create(order_serializer)
-        
-        # import data from cart items
-        domain = 'http://127.0.0.1:8000'
-        cart_path = reverse("api:cart")
-        cart_data = None
-        if request.auth:
-            headers = {'Authorization': f'Token {request.auth}'}
-            response = requests.get(domain + cart_path, headers=headers)
-            cart_data = response.json()
-        else:
-            return Response({"message": "Not authenticated to retrieve cart items."}, 
-                            status=status.HTTP_401_UNAUTHORIZED)
-            
+                    
         # create order items data
+        if len(cart_data)==0:
+            return Response({"message": "Cannot place order when cart is empty."},
+                            status=status.HTTP_403_FORBIDDEN)
+        
         order_items = []
         for row in cart_data:
             item = row.copy()
@@ -160,20 +166,15 @@ class OrderListView(generics.ListCreateAPIView):
         
         # no need of return for OrderItem headers, just run in case of error raising
         self.get_success_headers(order_item_serializer.data) 
-        headers = self.get_success_headers(order_serializer.data)
+        response_headers = self.get_success_headers(order_serializer.data)
         
         # clear cart
-        if request.auth:
-            headers = {'Authorization': f'Token {request.auth}'}
-            requests.delete(domain + cart_path, headers=headers)
-        else:
-            return Response({"message": "Not authenticated to delete cart items."}, 
-                            status=status.HTTP_401_UNAUTHORIZED)
+        requests.delete(domain + cart_path, headers=headers)
         
         # return serialized Order with nested OrderItems
         result_obj = get_object_or_404(self.get_queryset(), pk=order_serializer.data["id"])
         result_serializer = OrderSerializer(result_obj)
-        return Response(result_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(result_serializer.data, status=status.HTTP_201_CREATED, headers=response_headers)
 
         
 class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
