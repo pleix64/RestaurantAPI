@@ -8,13 +8,14 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ["id", "title", "slug"]
 
+
 class MenuItemSerializer(serializers.ModelSerializer):
-    category = serializers.StringRelatedField()
-    
+   
     class Meta:
         model = MenuItem
         fields = ["id", "title", "price", "featured", "category"]
-        
+
+           
 class GroupSerializer(serializers.ModelSerializer):
     
     class Meta:

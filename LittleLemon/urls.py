@@ -23,5 +23,5 @@ urlpatterns = [
     path('api/', include('djoser.urls')),
     path('', include('djoser.urls.authtoken')),
     path('api-auth/', include('rest_framework.urls')),
-    path('__debug__/', include('debug_toolbar.urls')),
+    # path('__debug__/', include('debug_toolbar.urls')),
 ]

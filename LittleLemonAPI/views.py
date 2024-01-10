@@ -2,14 +2,14 @@ from typing import Any
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 import requests
-from rest_framework import generics, status, filters
+from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import (IsAuthenticated, 
                                         DjangoModelPermissions,
                                         DjangoModelPermissionsOrAnonReadOnly, )
 from django.contrib.auth.models import User, Group
-from .models import Category, MenuItem, Cart, Order, OrderItem
+from .models import Category, MenuItem, Cart, Order
 from .serializers import (CategorySerializer, 
                           MenuItemSerializer,
                           UserSerializer, 
@@ -127,9 +127,7 @@ class OrderListView(generics.ListCreateAPIView):
             return OrderSerializer
         
     def create(self, request, *args, **kwargs):
-        # check authentication and retrieve cart data
-        domain = 'http://127.0.0.1:8000'
-        cart_path = reverse("api:cart")
+        # check authentication and retrieve cart data     
         headers = None
         if request.auth:
             headers = {'Authorization': f'Token {request.auth}'}
@@ -138,6 +136,8 @@ class OrderListView(generics.ListCreateAPIView):
         else:
             return Response({"message": "Not authenticated to retrieve cart items."}, 
                             status=status.HTTP_401_UNAUTHORIZED)
+        domain = 'http://127.0.0.1:8000'
+        cart_path = reverse("api:cart")
         response = requests.get(domain + cart_path, headers=headers)
         cart_data = response.json()
         
@@ -167,7 +167,7 @@ class OrderListView(generics.ListCreateAPIView):
         # no need of return for OrderItem headers, just run in case of error raising
         self.get_success_headers(order_item_serializer.data) 
         response_headers = self.get_success_headers(order_serializer.data)
-        
+
         # clear cart
         requests.delete(domain + cart_path, headers=headers)
         
