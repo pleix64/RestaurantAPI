@@ -29,7 +29,7 @@ The user to be added as Manager or Delivery Crew has to be registered before.
 with an empty json { }, and with the same user token. 
 
 
-* Other API endpoints should be standard as how the course requires. 
+* Usage of other API endpoints are straighforward. 
 
 
 
