@@ -1,5 +1,6 @@
 from django.urls import path
-from .views import (CategoryListView, 
+from .views import (index, 
+                    CategoryListView, 
                     CategoryDetailView,
                     MenuItemListView, 
                     MenuItemDetailView,
@@ -11,6 +12,7 @@ from .views import (CategoryListView,
 
 app_name = "api"
 urlpatterns = [
+    path('', index, name="index"),
     path('categories', CategoryListView.as_view()),
     path('categories/<int:pk>', CategoryDetailView.as_view()),
     path('menu-items', MenuItemListView.as_view()),

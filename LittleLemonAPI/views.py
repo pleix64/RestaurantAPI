@@ -1,5 +1,5 @@
 from typing import Any
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 import requests
 from rest_framework import generics, status
@@ -20,6 +20,10 @@ from .serializers import (CategorySerializer,
                           OrderManagerSerializer,
                           OrderDeliveryCrewSerializer)
 from .filters import MenuItemFilter, OrderFilter
+
+def index(request):
+    return render(request, "index.html")
+    
 
 class CategoryListView(generics.ListCreateAPIView):
     queryset = Category.objects.all()
