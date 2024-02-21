@@ -1,6 +1,5 @@
-from django.urls import path
-from .views import (index, 
-                    CategoryListView, 
+from django.urls import path, include
+from .views import (CategoryListView, 
                     CategoryDetailView,
                     MenuItemListView, 
                     MenuItemDetailView,
@@ -12,7 +11,7 @@ from .views import (index,
 
 app_name = "api"
 urlpatterns = [
-    path('', index, name="index"),
+    path('', include('djoser.urls')),
     path('categories', CategoryListView.as_view()),
     path('categories/<int:pk>', CategoryDetailView.as_view()),
     path('menu-items', MenuItemListView.as_view()),

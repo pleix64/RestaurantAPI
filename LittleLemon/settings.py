@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'djoser',
     'django_filters',
     'core',
+    'frontend',
     # 'debug_toolbar',
 ]
 
