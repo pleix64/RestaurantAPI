@@ -9,7 +9,8 @@ djangorestframework = "*"
 djoser = "*"
 django-debug-toolbar = "*"
 django-filter = "*"
-psycopg2 = "*"
+django-environ = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 
