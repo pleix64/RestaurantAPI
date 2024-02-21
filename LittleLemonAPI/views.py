@@ -20,11 +20,7 @@ from .serializers import (CategorySerializer,
                           OrderManagerSerializer,
                           OrderDeliveryCrewSerializer)
 from .filters import MenuItemFilter, OrderFilter
-
-def index(request):
-    return render(request, "index.html")
     
-
 class CategoryListView(generics.ListCreateAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
