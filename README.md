@@ -30,34 +30,3 @@ with an empty json { }, and with the same user token.
 
 
 * Usage of other API endpoints are straighforward. 
-
-
-
-# usernames and passwords:
-
-admin
-lemon@789!
-
-adrian
-ad@lemon789
-
-mario
-ma@lemon789
-
-mikasa
-mi@lemon123
-
-eren 
-you@refr33
-
-jsmith
-js@lemon789
-
-jdoe
-jd@lemon789
-
-frieren
-himmel-yousha
-
-himmel
-warrior2023
